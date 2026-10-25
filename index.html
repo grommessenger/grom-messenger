@@ -789,40 +789,76 @@ if (sendSavedBtn && savedMsgInput) {
   });
 }
 
-// Скрипт-рентген: смотрим всё, что есть в базе
+// Финальная логика поиска пользователей
 const searchInput = document.getElementById('main-search');
+const searchResults = document.getElementById('search-results');
 
-if (searchInput) {
-  let firstRun = true;
+if (searchInput && searchResults) {
   searchInput.addEventListener('input', (e) => {
-    if (firstRun) {
-        firstRun = false;
-        alert("Запрашиваем ВСЕХ пользователей из базы...");
-        
-        import('https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js')
-          .then((module) => {
-            const db = window.firebaseDb;
-            const usersRef = module.collection(db, 'users');
-
-            // Запрашиваем ВСЕ документы без фильтров поиска
-            module.getDocs(usersRef).then((snapshot) => {
-              if (snapshot.empty) {
-                alert("Коллекция 'пользователи' вообще ПУСТАЯ или недоступна!");
-                return;
-              }
-
-              let allData = [];
-              snapshot.forEach((doc) => {
-                // Превращаем данные в текст, чтобы увидеть скрытые пробелы и точные названия
-                allData.push(JSON.stringify(doc.data()));
-              });
-              alert("Вот что реально лежит в базе: " + allData.join(" | "));
-              
-            }).catch(err => alert("Ошибка: " + err.message));
-          });
+    const query = e.target.value.trim().replace('@', ''); 
+    
+    if (query.length === 0) {
+      searchResults.innerHTML = '';
+      return;
     }
+
+    // Красивый индикатор загрузки
+    searchResults.style.position = 'relative';
+    searchResults.innerHTML = '<div style="padding: 15px; color: gray; text-align: center; background: white; border-bottom: 1px solid #f0f0f0;">Поиск...</div>';
+
+    import('https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js')
+      .then((module) => {
+        const db = window.firebaseDb;
+        const usersRef = module.collection(db, 'users');
+
+        // Ищем совпадения по правильному полю 'username'
+        const q = module.query(
+          usersRef,
+          module.where('username', '>=', query),
+          module.where('username', '<=', query + '\uf8ff')
+        );
+
+        module.getDocs(q).then((snapshot) => {
+          searchResults.innerHTML = ''; 
+          
+          if (snapshot.empty) {
+            searchResults.innerHTML = '<div style="padding: 15px; color: gray; text-align: center; background: white; border-bottom: 1px solid #f0f0f0;">Пользователь не найден</div>';
+            return;
+          }
+
+          snapshot.forEach((doc) => {
+            const user = doc.data();
+            const userDiv = document.createElement('div');
+            userDiv.style.cssText = 'display: flex; align-items: center; gap: 12px; padding: 12px 15px; border-bottom: 1px solid #f0f0f0; cursor: pointer; background: white;';
+            
+            // Подтягиваем данные из правильных полей
+            const avatar = user.coverPhoto || 'https://via.placeholder.com/40';
+            const username = user.username || 'Без имени';
+            const bio = user.bio || '';
+
+            userDiv.innerHTML = `
+              <img src="${avatar}" style="width: 45px; height: 45px; border-radius: 50%; object-fit: cover;">
+              <div style="flex: 1; overflow: hidden;">
+                <div style="font-weight: 500; color: black; font-size: 16px;">${username}</div>
+                <div style="color: gray; font-size: 13px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${bio}</div>
+              </div>
+            `;
+            
+            userDiv.onclick = () => {
+              alert('В будущем здесь откроется чат с: ' + username);
+              searchResults.innerHTML = '';
+              searchInput.value = '';
+            };
+
+            searchResults.appendChild(userDiv);
+          });
+        }).catch(err => {
+           searchResults.innerHTML = `<div style="padding: 15px; color: red; text-align: center; background: white;">Ошибка БД: ${err.message}</div>`;
+        });
+      });
   });
 }
+
 
 
 
