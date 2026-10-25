@@ -153,10 +153,11 @@
   <div class="data-value" id="profileDisplayName">Без имени</div>
 </div>
 
-    <div class="data-group">
-      <label>Имя пользователя</label>
-      <div class="data-value">@user</div>
-    </div>
+    <div class="data-group" onclick="changeUsername()" style="cursor: pointer; background: rgba(0,0,0,0.02); padding: 5px; border-radius: 5px;">
+  <label style="color: #007bff;">Имя пользователя (юзернейм)</label>
+  <div class="data-value" id="profileUsername">@user</div>
+</div>
+
     <div class="data-group">
       <label>О себе (до 50 символов)</label>
       <input type="text" id="bio-input" class="bio-input" maxlength="50" placeholder="Напишите немного о себе">
@@ -450,16 +451,7 @@ profileUpload.addEventListener('change', (event) => {
     reader.readAsDataURL(file);
   }
 });
-// Смена имени пользователя
-const usernameGroup = document.querySelectorAll('.data-group')[1];
-const usernameValue = usernameGroup.querySelector('.data-value');
-usernameGroup.style.cursor = 'pointer';
-usernameGroup.addEventListener('click', () => {
-  const newUsername = prompt('Введите новое имя пользователя:', usernameValue.innerText);
-  if (newUsername && newUsername.trim() !== '') {
-    usernameValue.innerText = newUsername.startsWith('@') ? newUsername : '@' + newUsername;
-  }
-});
+
 
 // Меню "Устройства" (показывает активные сессии)
 const devicesBtn = document.querySelectorAll('#screen-settings .list-item')[1];
@@ -524,6 +516,18 @@ privacyItems.forEach(item => {
           });
       }
     }
+  }
+};
+window.changeUsername = function() {
+  const currentUsername = document.getElementById('profileUsername').textContent.replace('@', '');
+  let newUsername = prompt("Введите новый юзернейм (без @):", currentUsername);
+  
+  if (newUsername !== null && newUsername.trim() !== '') {
+    newUsername = newUsername.trim();
+    if (newUsername.startsWith('@')) {
+      newUsername = newUsername.substring(1);
+    }
+    document.getElementById('profileUsername').textContent = '@' + newUsername;
   }
 };
 
