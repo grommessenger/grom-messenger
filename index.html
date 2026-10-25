@@ -557,6 +557,48 @@ window.changeUsername = function() {
       });
   }
 };
+// Обработка загрузки нового фото и сохранение в Firebase
+document.getElementById('profile-upload').addEventListener('change', function(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const base64String = e.target.result; // Конвертируем фото в строку
+    
+    // 1. Сразу меняем картинку на экране
+    document.getElementById('profile-main-img').src = base64String;
+
+    // 2. Отправляем строку в базу данных
+    const user = window.firebaseAuth ? window.firebaseAuth.currentUser : null;
+    if (user) {
+      import('https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js')
+        .then((module) => {
+          const userDoc = module.doc(window.firebaseDb, 'users', user.uid);
+          module.setDoc(userDoc, { coverPhoto: base64String }, { merge: true })
+            .catch((err) => console.error('Ошибка сохранения фото:', err));
+        });
+    }
+  };
+  reader.readAsDataURL(file);
+});
+
+// Автоматическая загрузка сохраненного фото при входе
+if (window.firebaseAuth) {
+  window.firebaseAuth.onAuthStateChanged((user) => {
+    if (user) {
+      import('https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js')
+        .then((module) => {
+          const userDoc = module.doc(window.firebaseDb, 'users', user.uid);
+          module.getDoc(userDoc).then((docSnap) => {
+            if (docSnap.exists() && docSnap.data().coverPhoto) {
+              document.getElementById('profile-main-img').src = docSnap.data().coverPhoto;
+            }
+          });
+        });
+    }
+  });
+}
 
 
 
