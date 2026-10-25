@@ -789,27 +789,31 @@ if (sendSavedBtn && savedMsgInput) {
   });
 }
 
-// Логика поиска пользователей в базе данных
+// Логика поиска пользователей в базе данных (с выводом ошибок на экран)
 const searchInput = document.getElementById('main-search');
 const searchResults = document.getElementById('search-results');
 
 if (searchInput && searchResults) {
   searchInput.addEventListener('input', (e) => {
-    // Убираем символ @, если пользователь ввел его для поиска
     const query = e.target.value.trim().replace('@', ''); 
     
     if (query.length === 0) {
-      searchResults.innerHTML = ''; // Очищаем результаты, если строка пуста
+      searchResults.innerHTML = '';
       return;
     }
+
+    // Показываем индикатор загрузки
+    searchResults.innerHTML = '<div style="padding: 15px; color: gray; text-align: center;">Поиск...</div>';
 
     import('https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js')
       .then((module) => {
         const db = window.firebaseDb;
-        // Обращаемся именно к вашей коллекции "пользователи"
+        if (!db) {
+           searchResults.innerHTML = '<div style="padding: 15px; color: red; text-align: center;">Ошибка: База данных не инициализирована</div>';
+           return;
+        }
+
         const usersRef = module.collection(db, 'пользователи');
-        
-        // Ищем совпадения по началу строки в поле "имя пользователя"
         const q = module.query(
           usersRef,
           module.where('имя пользователя', '>=', query),
@@ -829,7 +833,6 @@ if (searchInput && searchResults) {
             const userDiv = document.createElement('div');
             userDiv.style.cssText = 'display: flex; align-items: center; gap: 12px; padding: 12px 15px; border-bottom: 1px solid #f0f0f0; cursor: pointer; background: white;';
             
-            // Подтягиваем данные точно по названиям ваших полей
             const avatar = user['обложка'] || 'https://via.placeholder.com/40';
             const username = user['имя пользователя'] || 'Без имени';
             const bio = user['био'] || '';
@@ -842,19 +845,24 @@ if (searchInput && searchResults) {
               </div>
             `;
             
-            // Действие при клике на пользователя
             userDiv.onclick = () => {
               alert('Открываем чат с: ' + username);
-              searchResults.innerHTML = ''; // Скрываем результаты после клика
+              searchResults.innerHTML = '';
               searchInput.value = '';
             };
 
             searchResults.appendChild(userDiv);
           });
-        }).catch(err => console.error("Ошибка при поиске:", err));
+        }).catch(err => {
+           // Выводим ошибку Firebase на экран
+           searchResults.innerHTML = `<div style="padding: 15px; color: red; text-align: center;">Ошибка БД: ${err.message}</div>`;
+        });
+      }).catch(err => {
+         searchResults.innerHTML = `<div style="padding: 15px; color: red; text-align: center;">Сбой загрузки: ${err.message}</div>`;
       });
   });
 }
+
 
 
 
