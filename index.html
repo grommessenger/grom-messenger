@@ -132,6 +132,8 @@
     <button id="close-sidebar" class="icon-btn">✕</button>
   </div>
   <div class="list-item" onclick="openScreen('screen-profile')">👤 Мой профиль</div>
+    <div class="list-item" onclick="openScreen('screen-saved')">🔖 Избранное</div>
+
   <div class="list-item" onclick="openScreen('screen-settings')">⚙️ Настройки</div>
 </div>
 
@@ -164,6 +166,18 @@
       <label>О себе (до 50 символов)</label>
       <input type="text" id="bio-input" class="bio-input" maxlength="50" placeholder="Напишите немного о себе">
     </div>
+  </div>
+</div>
+<!-- Экран Избранного -->
+<div id="screen-saved" class="full-screen">
+  <div class="screen-header">
+    <span class="back-btn" onclick="closeScreen('screen-saved')">←</span>
+    <span>Избранное</span>
+  </div>
+  <div id="saved-messages-list" style="flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; background: var(--bg);"></div>
+  <div style="padding: 10px; background: var(--panel); display: flex; gap: 10px; border-top: 1px solid var(--line);">
+    <input type="text" id="saved-message-input" placeholder="Написать в Избранное..." style="flex: 1; padding: 10px; border-radius: 20px; border: 1px solid var(--line); outline: none; background: var(--bg); color: var(--text);">
+    <button id="send-saved-message" style="background: #007bff; border: none; color: white; padding: 10px 15px; border-radius: 50%; cursor: pointer;">➤</button>
   </div>
 </div>
 
@@ -688,6 +702,78 @@ function loadBio() {
   }
 }
 loadBio();
+// Логика Избранного (сохранение и загрузка)
+const savedMsgList = document.getElementById('saved-messages-list');
+const savedMsgInput = document.getElementById('saved-message-input');
+const sendSavedBtn = document.getElementById('send-saved-message');
+let unsubscribeSaved = null;
+
+// Перехватываем открытие экрана Избранного, чтобы загрузить сообщения
+const originalOpenScreen = window.openScreen;
+window.openScreen = function(id) {
+  if (originalOpenScreen) originalOpenScreen(id);
+  
+  if (id === 'screen-saved') {
+    const user = window.firebaseAuth ? window.firebaseAuth.currentUser : null;
+    if (!user) return;
+
+    import('https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js')
+      .then((module) => {
+        const db = window.firebaseDb;
+        const messagesRef = module.collection(db, 'users', user.uid, 'savedMessages');
+        const q = module.query(messagesRef, module.orderBy('timestamp', 'asc'));
+
+        unsubscribeSaved = module.onSnapshot(q, (snapshot) => {
+          savedMsgList.innerHTML = ''; 
+          snapshot.forEach((doc) => {
+            const data = doc.data();
+            const msgDiv = document.createElement('div');
+            // Оформляем сообщения в стиле Телеграм (справа)
+            msgDiv.style.cssText = 'align-self: flex-end; background: #007bff; color: white; padding: 10px 15px; border-radius: 15px 15px 0 15px; max-width: 80%; word-wrap: break-word;';
+            msgDiv.textContent = data.text;
+            savedMsgList.appendChild(msgDiv);
+          });
+          savedMsgList.scrollTop = savedMsgList.scrollHeight; // Автоскролл вниз
+        });
+      });
+  }
+};
+
+// Отключение прослушки при закрытии экрана
+const originalCloseScreen = window.closeScreen;
+window.closeScreen = function(id) {
+  if (originalCloseScreen) originalCloseScreen(id);
+  if (id === 'screen-saved' && unsubscribeSaved) {
+    unsubscribeSaved();
+    unsubscribeSaved = null;
+  }
+};
+
+// Отправка нового сообщения в базу
+if (sendSavedBtn && savedMsgInput) {
+  const sendMessage = () => {
+    const text = savedMsgInput.value.trim();
+    const user = window.firebaseAuth ? window.firebaseAuth.currentUser : null;
+    if (!text || !user) return;
+
+    savedMsgInput.value = ''; // Очищаем поле ввода
+
+    import('https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js')
+      .then((module) => {
+        const db = window.firebaseDb;
+        const messagesRef = module.collection(db, 'users', user.uid, 'savedMessages');
+        module.addDoc(messagesRef, {
+          text: text,
+          timestamp: module.serverTimestamp()
+        }).catch(err => console.error("Ошибка сохранения:", err));
+      });
+  };
+
+  sendSavedBtn.addEventListener('click', sendMessage);
+  savedMsgInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') sendMessage();
+  });
+}
 
 
 
