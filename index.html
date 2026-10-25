@@ -110,7 +110,9 @@
   <div style="width: 24px;"></div>
 </div>
 
-      <div class="sidebar-tools"><label class="search-wrap"><svg><use href="#i-search"/></svg><input class="search" id="chatSearch" type="search" placeholder="Поиск" aria-label="Поиск по чатам"></label><div class="filter-row" role="group" aria-label="Фильтр чатов"><button class="filter-btn active" type="button">Все чаты</button><button class="filter-btn" type="button">Личные</button></div></div>
+      <div class="sidebar-tools"><label class="search-wrap"><svg><use href="#i-search"/></svg><input class="search" id="main-search" type="search" placeholder="Поиск" aria-label="Поиск по чатам"></label><div class="filter-row" role="group" aria-label="Фильтр чатов"><button class="filter-btn active" type="button">Все чаты</button><button class="filter-btn" type="button">Личные</button></div></div>
+      <div id="search-results" style="background: white; max-height: 300px; overflow-y: auto; position: absolute; top: 100%; left: 0; width: 100%; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.1);"></div>
+
 
       
       
@@ -787,6 +789,72 @@ if (sendSavedBtn && savedMsgInput) {
   });
 }
 
+// Логика поиска пользователей в базе данных
+const searchInput = document.getElementById('main-search');
+const searchResults = document.getElementById('search-results');
+
+if (searchInput && searchResults) {
+  searchInput.addEventListener('input', (e) => {
+    // Убираем символ @, если пользователь ввел его для поиска
+    const query = e.target.value.trim().replace('@', ''); 
+    
+    if (query.length === 0) {
+      searchResults.innerHTML = ''; // Очищаем результаты, если строка пуста
+      return;
+    }
+
+    import('https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js')
+      .then((module) => {
+        const db = window.firebaseDb;
+        // Обращаемся именно к вашей коллекции "пользователи"
+        const usersRef = module.collection(db, 'пользователи');
+        
+        // Ищем совпадения по началу строки в поле "имя пользователя"
+        const q = module.query(
+          usersRef,
+          module.where('имя пользователя', '>=', query),
+          module.where('имя пользователя', '<=', query + '\uf8ff')
+        );
+
+        module.getDocs(q).then((snapshot) => {
+          searchResults.innerHTML = ''; 
+          
+          if (snapshot.empty) {
+            searchResults.innerHTML = '<div style="padding: 15px; color: gray; text-align: center;">Пользователь не найден</div>';
+            return;
+          }
+
+          snapshot.forEach((doc) => {
+            const user = doc.data();
+            const userDiv = document.createElement('div');
+            userDiv.style.cssText = 'display: flex; align-items: center; gap: 12px; padding: 12px 15px; border-bottom: 1px solid #f0f0f0; cursor: pointer; background: white;';
+            
+            // Подтягиваем данные точно по названиям ваших полей
+            const avatar = user['обложка'] || 'https://via.placeholder.com/40';
+            const username = user['имя пользователя'] || 'Без имени';
+            const bio = user['био'] || '';
+
+            userDiv.innerHTML = `
+              <img src="${avatar}" style="width: 45px; height: 45px; border-radius: 50%; object-fit: cover;">
+              <div style="flex: 1; overflow: hidden;">
+                <div style="font-weight: 500; color: black; font-size: 16px;">${username}</div>
+                <div style="color: gray; font-size: 13px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${bio}</div>
+              </div>
+            `;
+            
+            // Действие при клике на пользователя
+            userDiv.onclick = () => {
+              alert('Открываем чат с: ' + username);
+              searchResults.innerHTML = ''; // Скрываем результаты после клика
+              searchInput.value = '';
+            };
+
+            searchResults.appendChild(userDiv);
+          });
+        }).catch(err => console.error("Ошибка при поиске:", err));
+      });
+  });
+}
 
 
 
