@@ -622,6 +622,44 @@ function loadProfileCover() {
 }
 loadProfileCover();
 
+// Сохранение и загрузка описания "О себе"
+const bioField = document.querySelector('.bio-input');
+
+if (bioField) {
+  // Отправка в базу при потере фокуса (когда скрываете клавиатуру)
+  bioField.addEventListener('change', function(e) {
+    const user = window.firebaseAuth ? window.firebaseAuth.currentUser : null;
+    if (user) {
+      import('https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js')
+        .then((module) => {
+          const userDoc = module.doc(window.firebaseDb, 'users', user.uid);
+          module.setDoc(userDoc, { bio: e.target.value }, { merge: true })
+            .catch((err) => console.error('Ошибка сохранения:', err));
+        });
+    }
+  });
+}
+
+function loadBio() {
+  if (window.firebaseAuth) {
+    window.firebaseAuth.onAuthStateChanged((user) => {
+      if (user) {
+        import('https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js')
+          .then((module) => {
+            const userDoc = module.doc(window.firebaseDb, 'users', user.uid);
+            module.getDoc(userDoc).then((docSnap) => {
+              if (docSnap.exists() && docSnap.data().bio && bioField) {
+                bioField.value = docSnap.data().bio;
+              }
+            });
+          });
+      }
+    });
+  } else {
+    setTimeout(loadBio, 500); // Ожидание инициализации Firebase
+  }
+}
+loadBio();
 
 
 
