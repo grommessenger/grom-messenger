@@ -802,7 +802,7 @@ if (searchInput && searchResults) {
       return;
     }
 
-    // Красивый индикатор загрузки
+    // Индикатор загрузки
     searchResults.style.position = 'relative';
     searchResults.innerHTML = '<div style="padding: 15px; color: gray; text-align: center; background: white; border-bottom: 1px solid #f0f0f0;">Поиск...</div>';
 
@@ -811,7 +811,6 @@ if (searchInput && searchResults) {
         const db = window.firebaseDb;
         const usersRef = module.collection(db, 'users');
 
-        // Ищем совпадения по правильному полю 'username'
         const q = module.query(
           usersRef,
           module.where('username', '>=', query),
@@ -831,7 +830,6 @@ if (searchInput && searchResults) {
             const userDiv = document.createElement('div');
             userDiv.style.cssText = 'display: flex; align-items: center; gap: 12px; padding: 12px 15px; border-bottom: 1px solid #f0f0f0; cursor: pointer; background: white;';
             
-            // Подтягиваем данные из правильных полей
             const avatar = user.coverPhoto || 'https://via.placeholder.com/40';
             const username = user.username || 'Без имени';
             const bio = user.bio || '';
@@ -845,7 +843,7 @@ if (searchInput && searchResults) {
             `;
             
             userDiv.onclick = () => {
-              alert('В будущем здесь откроется чат с: ' + username);
+              alert('Выбран пользователь: ' + username);
               searchResults.innerHTML = '';
               searchInput.value = '';
             };
@@ -858,6 +856,7 @@ if (searchInput && searchResults) {
       });
   });
 }
+
 
 
 
