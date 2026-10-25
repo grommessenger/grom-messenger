@@ -269,8 +269,18 @@
       const savedName = user.displayName || 'Без имени';
 document.getElementById('topUserName').textContent = savedName;
 if (document.getElementById('profileDisplayName')) document.getElementById('profileDisplayName').textContent = savedName;
-const savedUsername = localStorage.getItem('grom_username') || 'user';
-if (document.getElementById('profileUsername')) document.getElementById('profileUsername').textContent = '@' + savedUsername;
+import('https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js')
+  .then((module) => {
+    const userDoc = module.doc(window.firebaseDb, 'users', user.uid);
+    module.getDoc(userDoc).then((docSnap) => {
+      if (docSnap.exists() && docSnap.data().username) {
+        if (document.getElementById('profileUsername')) {
+          document.getElementById('profileUsername').textContent = '@' + docSnap.data().username;
+        }
+      }
+    });
+  });
+
 
 
       authOverlay.style.display = 'none';
@@ -529,12 +539,23 @@ window.changeUsername = function() {
     if (newUsername.startsWith('@')) {
       newUsername = newUsername.substring(1);
     }
-    document.getElementById('profileUsername').textContent = '@' + newUsername;
-        localStorage.setItem('grom_username', newUsername);
-    alert('Юзернейм сохранен!');
-
+    
+    const user = window.firebaseAuth.currentUser;
+    if (user) {
+      import('https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js')
+        .then((module) => {
+          const userDoc = module.doc(window.firebaseDb, 'users', user.uid);
+          module.setDoc(userDoc, { username: newUsername }, { merge: true })
+            .then(() => {
+              document.getElementById('profileUsername').textContent = '@' + newUsername;
+              alert('Юзернейм успешно сохранен в базу данных!');
+            })
+            .catch((err) => alert('Ошибка сохранения: ' + err.message));
+        });
+    }
   }
 };
+
 
 </script>
 
