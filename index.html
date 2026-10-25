@@ -789,27 +789,40 @@ if (sendSavedBtn && savedMsgInput) {
   });
 }
 
-// Логика поиска пользователей в базе данных (с выводом ошибок на экран)
+// Диагностический скрипт поиска
 const searchInput = document.getElementById('main-search');
 const searchResults = document.getElementById('search-results');
 
+// Маячок 1: Проверяем, видит ли скрипт HTML
+if (!searchInput) {
+    alert("Внимание: Скрипт работает, но он не может найти поле поиска (id='main-search') в HTML коде!");
+}
+
 if (searchInput && searchResults) {
+  let firstRun = true;
   searchInput.addEventListener('input', (e) => {
     const query = e.target.value.trim().replace('@', ''); 
     
+    // Маячок 2: Проверяем, реагирует ли скрипт на нажатия
+    if (firstRun && query.length > 0) {
+        alert("Связь есть! Вы начали вводить: " + query + ". Запускаем поиск по базе...");
+        firstRun = false;
+    }
+
     if (query.length === 0) {
       searchResults.innerHTML = '';
       return;
     }
 
-    // Показываем индикатор загрузки
-    searchResults.innerHTML = '<div style="padding: 15px; color: gray; text-align: center;">Поиск...</div>';
+    // Делаем блок загрузки ярким, чтобы его невозможно было не заметить
+    searchResults.style.position = 'relative';
+    searchResults.innerHTML = '<div style="padding: 20px; font-size: 16px; color: white; background: blue; text-align: center;">Подключение к базе...</div>';
 
     import('https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js')
       .then((module) => {
         const db = window.firebaseDb;
         if (!db) {
-           searchResults.innerHTML = '<div style="padding: 15px; color: red; text-align: center;">Ошибка: База данных не инициализирована</div>';
+           searchResults.innerHTML = '<div style="padding: 15px; color: white; background: red;">Ошибка: БД не подключена</div>';
            return;
         }
 
@@ -821,13 +834,12 @@ if (searchInput && searchResults) {
         );
 
         module.getDocs(q).then((snapshot) => {
-          searchResults.innerHTML = ''; 
-          
           if (snapshot.empty) {
-            searchResults.innerHTML = '<div style="padding: 15px; color: gray; text-align: center;">Пользователь не найден</div>';
+            searchResults.innerHTML = '<div style="padding: 15px; color: black; background: orange;">Пользователь не найден</div>';
             return;
           }
 
+          searchResults.innerHTML = ''; 
           snapshot.forEach((doc) => {
             const user = doc.data();
             const userDiv = document.createElement('div');
@@ -835,33 +847,20 @@ if (searchInput && searchResults) {
             
             const avatar = user['обложка'] || 'https://via.placeholder.com/40';
             const username = user['имя пользователя'] || 'Без имени';
-            const bio = user['био'] || '';
 
             userDiv.innerHTML = `
               <img src="${avatar}" style="width: 45px; height: 45px; border-radius: 50%; object-fit: cover;">
-              <div style="flex: 1; overflow: hidden;">
-                <div style="font-weight: 500; color: black; font-size: 16px;">${username}</div>
-                <div style="color: gray; font-size: 13px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${bio}</div>
-              </div>
+              <div style="font-weight: 500; color: black; font-size: 16px;">${username}</div>
             `;
-            
-            userDiv.onclick = () => {
-              alert('Открываем чат с: ' + username);
-              searchResults.innerHTML = '';
-              searchInput.value = '';
-            };
-
             searchResults.appendChild(userDiv);
           });
         }).catch(err => {
-           // Выводим ошибку Firebase на экран
-           searchResults.innerHTML = `<div style="padding: 15px; color: red; text-align: center;">Ошибка БД: ${err.message}</div>`;
+           searchResults.innerHTML = `<div style="padding: 15px; color: white; background: red;">Ошибка базы: ${err.message}</div>`;
         });
-      }).catch(err => {
-         searchResults.innerHTML = `<div style="padding: 15px; color: red; text-align: center;">Сбой загрузки: ${err.message}</div>`;
       });
   });
 }
+
 
 
 
