@@ -789,77 +789,57 @@ if (sendSavedBtn && savedMsgInput) {
   });
 }
 
-// Диагностический скрипт поиска
+// Супер-диагностика через всплывающие окна (в обход HTML)
 const searchInput = document.getElementById('main-search');
-const searchResults = document.getElementById('search-results');
 
-// Маячок 1: Проверяем, видит ли скрипт HTML
-if (!searchInput) {
-    alert("Внимание: Скрипт работает, но он не может найти поле поиска (id='main-search') в HTML коде!");
-}
-
-if (searchInput && searchResults) {
+if (searchInput) {
   let firstRun = true;
   searchInput.addEventListener('input', (e) => {
     const query = e.target.value.trim().replace('@', ''); 
     
-    // Маячок 2: Проверяем, реагирует ли скрипт на нажатия
-    if (firstRun && query.length > 0) {
-        alert("Связь есть! Вы начали вводить: " + query + ". Запускаем поиск по базе...");
-        firstRun = false;
-    }
+    if (query.length === 0) return;
 
-    if (query.length === 0) {
-      searchResults.innerHTML = '';
-      return;
-    }
+    if (firstRun) {
+        alert("Отправляем запрос в базу, ищем: " + query);
+        firstRun = false; // Блокируем спам окнами
+        
+        import('https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js')
+          .then((module) => {
+            const db = window.firebaseDb;
+            if (!db) {
+               alert("Ошибка: БД не подключена в окне!");
+               return;
+            }
 
-    // Делаем блок загрузки ярким, чтобы его невозможно было не заметить
-    searchResults.style.position = 'relative';
-    searchResults.innerHTML = '<div style="padding: 20px; font-size: 16px; color: white; background: blue; text-align: center;">Подключение к базе...</div>';
+            const usersRef = module.collection(db, 'пользователи');
+            const q = module.query(
+              usersRef,
+              module.where('имя пользователя', '>=', query),
+              module.where('имя пользователя', '<=', query + '\uf8ff')
+            );
 
-    import('https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js')
-      .then((module) => {
-        const db = window.firebaseDb;
-        if (!db) {
-           searchResults.innerHTML = '<div style="padding: 15px; color: white; background: red;">Ошибка: БД не подключена</div>';
-           return;
-        }
+            module.getDocs(q).then((snapshot) => {
+              if (snapshot.empty) {
+                alert("Ответ от базы: Пользователь с именем '" + query + "' не найден в коллекции 'пользователи'.");
+                return;
+              }
 
-        const usersRef = module.collection(db, 'пользователи');
-        const q = module.query(
-          usersRef,
-          module.where('имя пользователя', '>=', query),
-          module.where('имя пользователя', '<=', query + '\uf8ff')
-        );
-
-        module.getDocs(q).then((snapshot) => {
-          if (snapshot.empty) {
-            searchResults.innerHTML = '<div style="padding: 15px; color: black; background: orange;">Пользователь не найден</div>';
-            return;
-          }
-
-          searchResults.innerHTML = ''; 
-          snapshot.forEach((doc) => {
-            const user = doc.data();
-            const userDiv = document.createElement('div');
-            userDiv.style.cssText = 'display: flex; align-items: center; gap: 12px; padding: 12px 15px; border-bottom: 1px solid #f0f0f0; cursor: pointer; background: white;';
-            
-            const avatar = user['обложка'] || 'https://via.placeholder.com/40';
-            const username = user['имя пользователя'] || 'Без имени';
-
-            userDiv.innerHTML = `
-              <img src="${avatar}" style="width: 45px; height: 45px; border-radius: 50%; object-fit: cover;">
-              <div style="font-weight: 500; color: black; font-size: 16px;">${username}</div>
-            `;
-            searchResults.appendChild(userDiv);
+              let foundNames = [];
+              snapshot.forEach((doc) => {
+                foundNames.push(doc.data()['имя пользователя']);
+              });
+              alert("Ура! База успешно нашла: " + foundNames.join(", "));
+              
+            }).catch(err => {
+               alert("Ошибка базы данных: " + err.message);
+            });
+          }).catch(err => {
+             alert("Сбой загрузки: " + err.message);
           });
-        }).catch(err => {
-           searchResults.innerHTML = `<div style="padding: 15px; color: white; background: red;">Ошибка базы: ${err.message}</div>`;
-        });
-      });
+    }
   });
 }
+
 
 
 
