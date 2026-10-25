@@ -622,19 +622,47 @@ function loadProfileCover() {
 }
 loadProfileCover();
 
-// Сохранение и загрузка описания "О себе"
+// Сохранение и загрузка описания "О себе" с галочкой
 const bioField = document.querySelector('.bio-input');
 
 if (bioField) {
-  // Отправка в базу при потере фокуса (когда скрываете клавиатуру)
-  bioField.addEventListener('change', function(e) {
+  // 1. Создаем галочку и размещаем ее в правом верхнем углу
+  const checkmarkBtn = document.createElement('div');
+  checkmarkBtn.innerHTML = '✓';
+  checkmarkBtn.style.cssText = 'position: fixed; top: 15px; right: 20px; font-size: 28px; color: #007bff; display: none; z-index: 1050; cursor: pointer; font-weight: bold;';
+  document.body.appendChild(checkmarkBtn);
+
+  // 2. Показываем галочку при вводе текста
+  bioField.addEventListener('input', () => {
+    checkmarkBtn.style.display = 'block';
+  });
+
+  // 3. Логика сохранения при нажатии на галочку
+  checkmarkBtn.addEventListener('mousedown', (e) => {
+    e.preventDefault(); // Предотвращаем сброс фокуса до сохранения
+    bioField.blur(); // Скрываем клавиатуру
+    checkmarkBtn.style.display = 'none'; // Убираем галочку
+
     const user = window.firebaseAuth ? window.firebaseAuth.currentUser : null;
     if (user) {
       import('https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js')
         .then((module) => {
           const userDoc = module.doc(window.firebaseDb, 'users', user.uid);
-          module.setDoc(userDoc, { bio: e.target.value }, { merge: true })
+          module.setDoc(userDoc, { bio: bioField.value }, { merge: true })
             .catch((err) => console.error('Ошибка сохранения:', err));
+        });
+    }
+  });
+
+  // 4. Запасное сохранение, если пользователь скрыл клавиатуру системной кнопкой
+  bioField.addEventListener('change', (e) => {
+    checkmarkBtn.style.display = 'none';
+    const user = window.firebaseAuth ? window.firebaseAuth.currentUser : null;
+    if (user) {
+      import('https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js')
+        .then((module) => {
+          const userDoc = module.doc(window.firebaseDb, 'users', user.uid);
+          module.setDoc(userDoc, { bio: e.target.value }, { merge: true });
         });
     }
   });
@@ -656,10 +684,11 @@ function loadBio() {
       }
     });
   } else {
-    setTimeout(loadBio, 500); // Ожидание инициализации Firebase
+    setTimeout(loadBio, 500);
   }
 }
 loadBio();
+
 
 
 
