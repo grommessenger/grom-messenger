@@ -789,11 +789,23 @@ if (sendSavedBtn && savedMsgInput) {
   });
 }
 
-// Финальная логика поиска пользователей
+// Автономный поиск с автоматическим созданием контейнера
 const searchInput = document.getElementById('main-search');
-const searchResults = document.getElementById('search-results');
 
-if (searchInput && searchResults) {
+if (searchInput) {
+  // Автоматически создаем контейнер для результатов, если его нет в HTML
+  let searchResults = document.getElementById('search-results');
+  if (!searchResults) {
+    searchResults = document.createElement('div');
+    searchResults.id = 'search-results';
+    searchResults.style.cssText = 'position: absolute; top: 100%; left: 0; right: 0; background: white; z-index: 1000; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); max-height: 300px; overflow-y: auto;';
+    
+    if (searchInput.parentElement) {
+      searchInput.parentElement.style.position = 'relative';
+      searchInput.parentElement.appendChild(searchResults);
+    }
+  }
+
   searchInput.addEventListener('input', (e) => {
     const query = e.target.value.trim().replace('@', ''); 
     
@@ -802,15 +814,17 @@ if (searchInput && searchResults) {
       return;
     }
 
-    // Индикатор загрузки
-    searchResults.style.position = 'relative';
-    searchResults.innerHTML = '<div style="padding: 15px; color: gray; text-align: center; background: white; border-bottom: 1px solid #f0f0f0;">Поиск...</div>';
+    searchResults.innerHTML = '<div style="padding: 15px; color: gray; text-align: center;">Поиск...</div>';
 
     import('https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js')
       .then((module) => {
         const db = window.firebaseDb;
-        const usersRef = module.collection(db, 'users');
+        if (!db) {
+          searchResults.innerHTML = '<div style="padding: 15px; color: red; text-align: center;">Ошибка: БД не подключена</div>';
+          return;
+        }
 
+        const usersRef = module.collection(db, 'users');
         const q = module.query(
           usersRef,
           module.where('username', '>=', query),
@@ -821,7 +835,7 @@ if (searchInput && searchResults) {
           searchResults.innerHTML = ''; 
           
           if (snapshot.empty) {
-            searchResults.innerHTML = '<div style="padding: 15px; color: gray; text-align: center; background: white; border-bottom: 1px solid #f0f0f0;">Пользователь не найден</div>';
+            searchResults.innerHTML = '<div style="padding: 15px; color: gray; text-align: center;">Пользователь не найден</div>';
             return;
           }
 
@@ -851,11 +865,14 @@ if (searchInput && searchResults) {
             searchResults.appendChild(userDiv);
           });
         }).catch(err => {
-           searchResults.innerHTML = `<div style="padding: 15px; color: red; text-align: center; background: white;">Ошибка БД: ${err.message}</div>`;
+           searchResults.innerHTML = `<div style="padding: 15px; color: red; text-align: center;">Ошибка БД: ${err.message}</div>`;
         });
+      }).catch(err => {
+         searchResults.innerHTML = `<div style="padding: 15px; color: red; text-align: center;">Ошибка загрузки SDK: ${err.message}</div>`;
       });
   });
 }
+
 
 
 
