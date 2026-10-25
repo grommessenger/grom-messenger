@@ -105,11 +105,12 @@
       <div class="brand-row">
       <div id="menu-btn" class="menu-trigger">☰</div>
   
-        <a class="brand" href="#" aria-label="ГРОМ, главная"><><img src="IMG_20261023_101101_756.jpg" class="brand-logo" alt="ГРОМ">
+       <div id="topUserName" style="font-size: 18px; font-weight: bold; text-align: center; flex-grow: 1; color: var(--text);">Загрузка...</div>
+
 <span class="brand-name">ГРОМ</span><span class="brand-caption">говори громче</span></span></a><button class="icon-btn" id="newChatBtn" type="button" aria-label="Новый чат" title="Новый чат"><svg><use href="#i-plus"/></svg></button></div>
       <div class="sidebar-tools"><label class="search-wrap"><svg><use href="#i-search"/></svg><input class="search" id="chatSearch" type="search" placeholder="Поиск" aria-label="Поиск по чатам"></label><div class="filter-row" role="group" aria-label="Фильтр чатов"><button class="filter-btn active" type="button">Все чаты</button><button class="filter-btn" type="button">Личные</button></div></div>
 
-      <div class="section-label"><span>Сообщения</span><span id="chatCount"></span></div><div class="chat-list" id="chatList" role="listbox" aria-label="Ваши чаты"></div>
+      
       <div class="sidebar-footer"><div class="avatar self-avatar">АВ</div><div><div class="self-name">Алексей Воронов</div><div class="self-status">В сети</div></div><button class="icon-btn footer-more" type="button" aria-label="Ещё" title="Ещё"><svg><use href="#i-more"/></svg></button></div>
     </aside>
     <main class="main" aria-label="Окно сообщений">
@@ -259,6 +260,8 @@
   // Проверка статуса: скрывать экран, если пользователь уже вошел
   onAuthStateChanged(auth, (user) => {
     if (user) {
+      document.getElementById('topUserName').textContent = user.displayName || 'Без имени';
+
       authOverlay.style.display = 'none';
     } else {
       authOverlay.style.display = 'flex';
