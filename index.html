@@ -583,22 +583,7 @@ document.getElementById('profile-upload').addEventListener('change', function(ev
   reader.readAsDataURL(file);
 });
 
-// Автоматическая загрузка сохраненного фото при входе
-if (window.firebaseAuth) {
-  window.firebaseAuth.onAuthStateChanged((user) => {
-    if (user) {
-      import('https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js')
-        .then((module) => {
-          const userDoc = module.doc(window.firebaseDb, 'users', user.uid);
-          module.getDoc(userDoc).then((docSnap) => {
-            if (docSnap.exists() && docSnap.data().coverPhoto) {
-              document.getElementById('profile-main-img').src = docSnap.data().coverPhoto;
-            }
-          });
-        });
-    }
-  });
-}
+
 
 
 
