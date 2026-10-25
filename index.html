@@ -536,25 +536,41 @@ window.changeUsername = function() {
   
   if (newUsername !== null && newUsername.trim() !== '') {
     newUsername = newUsername.trim();
-    if (newUsername.startsWith('@')) {
-      newUsername = newUsername.substring(1);
-    }
+    if (newUsername.startsWith('@')) newUsername = newUsername.substring(1);
     
-    const user = window.firebaseAuth.currentUser;
-    if (user) {
-      import('https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js')
-        .then((module) => {
+    const user = window.firebaseAuth ? window.firebaseAuth.currentUser : null;
+    if (!user) {
+      alert("Ошибка: Система не видит вашу авторизацию!");
+      return;
+    }
+
+    document.getElementById('profileUsername').textContent = "Сохранение...";
+
+    import('https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js')
+      .then((module) => {
+        try {
           const userDoc = module.doc(window.firebaseDb, 'users', user.uid);
           module.setDoc(userDoc, { username: newUsername }, { merge: true })
             .then(() => {
               document.getElementById('profileUsername').textContent = '@' + newUsername;
-              alert('Юзернейм успешно сохранен в базу данных!');
+              alert('Успех: Юзернейм сохранен в базу!');
             })
-            .catch((err) => alert('Ошибка сохранения: ' + err.message));
-        });
-    }
+            .catch((err) => {
+              document.getElementById('profileUsername').textContent = '@' + currentUsername;
+              alert('Ошибка базы Firebase: ' + err.message);
+            });
+        } catch (e) {
+          document.getElementById('profileUsername').textContent = '@' + currentUsername;
+          alert('Внутренняя ошибка кода: ' + e.message);
+        }
+      })
+      .catch((err) => {
+        document.getElementById('profileUsername').textContent = '@' + currentUsername;
+        alert('Ошибка загрузки модуля: ' + err.message);
+      });
   }
 };
+
 
 
 </script>
