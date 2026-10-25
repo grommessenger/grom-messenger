@@ -102,16 +102,16 @@
   </svg>
   <div class="app" id="app">
     <aside class="sidebar" aria-label="Список чатов">
-      <div class="brand-row">
-      <div id="menu-btn" class="menu-trigger">☰</div>
-  
-       <div id="topUserName" style="font-size: 18px; font-weight: bold; text-align: center; flex-grow: 1; color: var(--text);">Загрузка...</div>
+      <div class="brand-row" style="display: flex; align-items: center; justify-content: space-between; padding: 15px;">
+  <div id="menu-btn" class="menu-trigger" style="font-size: 24px; cursor: pointer;">☰</div>
+  <div id="topUserName" style="font-size: 18px; font-weight: bold; text-align: center; flex-grow: 1; color: var(--text);">Без имени</div>
+  <div style="width: 24px;"></div>
+</div>
 
-<span class="brand-name">ГРОМ</span><span class="brand-caption">говори громче</span></span></a><button class="icon-btn" id="newChatBtn" type="button" aria-label="Новый чат" title="Новый чат"><svg><use href="#i-plus"/></svg></button></div>
       <div class="sidebar-tools"><label class="search-wrap"><svg><use href="#i-search"/></svg><input class="search" id="chatSearch" type="search" placeholder="Поиск" aria-label="Поиск по чатам"></label><div class="filter-row" role="group" aria-label="Фильтр чатов"><button class="filter-btn active" type="button">Все чаты</button><button class="filter-btn" type="button">Личные</button></div></div>
 
       
-      <div class="sidebar-footer"><div class="avatar self-avatar">АВ</div><div><div class="self-name">Алексей Воронов</div><div class="self-status">В сети</div></div><button class="icon-btn footer-more" type="button" aria-label="Ещё" title="Ещё"><svg><use href="#i-more"/></svg></button></div>
+      
     </aside>
     <main class="main" aria-label="Окно сообщений">
       <header class="chat-header"><button class="icon-btn mobile-back" id="backBtn" type="button" aria-label="Назад к чатам"><svg><use href="#i-back"/></svg></button><div class="avatar header-avatar" id="headerAvatar"></div><div class="header-copy"><div class="header-name" id="headerName"></div><div class="header-status" id="headerStatus"></div></div><div class="header-actions"><button class="icon-btn" type="button" aria-label="Найти в чате" title="Найти в чате"><svg><use href="#i-search"/></svg></button><button class="icon-btn" type="button" aria-label="Ещё" title="Ещё"><svg><use href="#i-more"/></svg></button><button class="call-btn" id="callBtn" type="button"><svg><use href="#i-phone"/></svg><span>Позвонить</span></button></div></header>
@@ -148,6 +148,11 @@
       <label>Аккаунт</label>
       <div class="data-value">+7 000 000 00 00</div>
     </div>
+    <div class="data-group" onclick="changeDisplayName()" style="cursor: pointer; background: rgba(0,123,255,0.05); padding: 5px; border-radius: 5px;">
+  <label style="color: #007bff;">Имя и фамилия (нажмите, чтобы изменить)</label>
+  <div class="data-value" id="profileDisplayName">Без имени</div>
+</div>
+
     <div class="data-group">
       <label>Имя пользователя</label>
       <div class="data-value">@user</div>
@@ -260,7 +265,10 @@
   // Проверка статуса: скрывать экран, если пользователь уже вошел
   onAuthStateChanged(auth, (user) => {
     if (user) {
-      document.getElementById('topUserName').textContent = user.displayName || 'Без имени';
+      const savedName = user.displayName || 'Без имени';
+document.getElementById('topUserName').textContent = savedName;
+if (document.getElementById('profileDisplayName')) document.getElementById('profileDisplayName').textContent = savedName;
+
 
       authOverlay.style.display = 'none';
     } else {
@@ -497,6 +505,28 @@ privacyItems.forEach(item => {
     }
     modal.style.display = 'block';
   }
+  window.changeDisplayName = function() {
+  const currentName = document.getElementById('profileDisplayName').textContent;
+  const newName = prompt("Введите ваше имя и фамилию:", currentName !== 'Без имени' ? currentName : '');
+  
+  if (newName !== null && newName.trim() !== '') {
+    if (confirm('Сохранить имя "' + newName + '"?')) {
+      document.getElementById('profileDisplayName').textContent = newName;
+      document.getElementById('topUserName').textContent = newName;
+      
+      const user = window.firebaseAuth.currentUser;
+      if (user) {
+        import('https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js')
+          .then((module) => {
+            module.updateProfile(user, { displayName: newName })
+              .then(() => alert('Имя успешно сохранено!'))
+              .catch((err) => alert('Ошибка сохранения: ' + err.message));
+          });
+      }
+    }
+  }
+};
+
 </script>
 
 </body>
