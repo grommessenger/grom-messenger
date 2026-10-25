@@ -557,31 +557,69 @@ window.changeUsername = function() {
       });
   }
 };
-// Обработка загрузки нового фото и сохранение в Firebase
+// Обработка загрузки нового фото через ImgBB и сохранение ссылки в Firebase
 document.getElementById('profile-upload').addEventListener('change', function(event) {
   const file = event.target.files[0];
   if (!file) return;
 
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    const base64String = e.target.result; // Конвертируем фото в строку
-    
-    // 1. Сразу меняем картинку на экране
-    document.getElementById('profile-main-img').src = base64String;
+  const formData = new FormData();
+  formData.append('image', file);
 
-    // 2. Отправляем строку в базу данных
-    const user = window.firebaseAuth ? window.firebaseAuth.currentUser : null;
-    if (user) {
-      import('https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js')
-        .then((module) => {
-          const userDoc = module.doc(window.firebaseDb, 'users', user.uid);
-          module.setDoc(userDoc, { coverPhoto: base64String }, { merge: true })
-            .catch((err) => console.error('Ошибка сохранения фото:', err));
-        });
+  // Отправляем фото на серверы ImgBB
+  fetch('https://api.imgbb.com/1/upload?key=Dfc0d0db821e71f4cc960222df9c3a5f', {
+    method: 'POST',
+    body: formData
+  })
+  .then(response => response.json())
+  .then(result => {
+    if (result.success) {
+      const imageUrl = result.data.url; // Получаем готовую короткую ссылку
+      
+      // 1. Сразу меняем картинку профиля на экране
+      document.getElementById('profile-main-img').src = imageUrl;
+
+      // 2. Сохраняем только короткую ссылку в базу данных Firestore
+      const user = window.firebaseAuth ? window.firebaseAuth.currentUser : null;
+      if (user) {
+        import('https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js')
+          .then((module) => {
+            const userDoc = module.doc(window.firebaseDb, 'users', user.uid);
+            module.setDoc(userDoc, { coverPhoto: imageUrl }, { merge: true })
+              .catch((err) => console.error('Ошибка сохранения ссылки:', err));
+          });
+      }
+    } else {
+      alert('Ошибка при загрузке фото. Попробуйте еще раз.');
     }
-  };
-  reader.readAsDataURL(file);
+  })
+  .catch(error => {
+    console.error('Ошибка сети:', error);
+    alert('Нет соединения с сервером картинок.');
+  });
 });
+
+// Автоматическая загрузка сохраненного фото при входе в приложение
+function loadProfileCover() {
+  if (window.firebaseAuth) {
+    window.firebaseAuth.onAuthStateChanged((user) => {
+      if (user) {
+        import('https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js')
+          .then((module) => {
+            const userDoc = module.doc(window.firebaseDb, 'users', user.uid);
+            module.getDoc(userDoc).then((docSnap) => {
+              if (docSnap.exists() && docSnap.data().coverPhoto) {
+                document.getElementById('profile-main-img').src = docSnap.data().coverPhoto;
+              }
+            });
+          });
+      }
+    });
+  } else {
+    setTimeout(loadProfileCover, 500); // Ожидаем загрузки Firebase
+  }
+}
+loadProfileCover();
+
 
 
 
