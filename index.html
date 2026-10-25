@@ -266,16 +266,25 @@
   });
 
   // Кнопка Входа
-  btnLogin.addEventListener('click', () => {
-    signInWithEmailAndPassword(auth, emailInput.value, passwordInput.value)
-      .catch((error) => { authError.textContent = "Ошибка: неверный email или пароль"; });
-  });
+btnLogin.addEventListener('click', () => {
+  if (!document.getElementById('agreeCheck').checked) {
+    authError.textContent = 'Пожалуйста, ознакомьтесь с правилами и поставьте галочку.';
+    return;
+  }
+  signInWithEmailAndPassword(auth, emailInput.value, passwordInput.value)
+    .catch((error) => { authError.textContent = "Ошибка: неверный email или пароль"; });
+});
 
-  // Кнопка Регистрации
-  btnRegister.addEventListener('click', () => {
-    createUserWithEmailAndPassword(auth, emailInput.value, passwordInput.value)
-      .catch((error) => { authError.textContent = "Ошибка: " + (error.code === 'auth/email-already-in-use' ? 'Email уже занят' : error.message); });
-  });
+// Кнопка Регистрации
+btnRegister.addEventListener('click', () => {
+  if (!document.getElementById('agreeCheck').checked) {
+    authError.textContent = 'Пожалуйста, ознакомьтесь с правилами и поставьте галочку.';
+    return;
+  }
+  createUserWithEmailAndPassword(auth, emailInput.value, passwordInput.value)
+    .catch((error) => { authError.textContent = "Ошибка: " + (error.code === 'auth/email-already-in-use' ? 'Email уже используется' : 'Произошла ошибка при регистрации'); });
+});
+
  // Кнопка сброса пароля
 document.getElementById('btnReset').addEventListener('click', () => {
   const email = emailInput.value.trim();
