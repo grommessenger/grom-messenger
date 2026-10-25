@@ -789,56 +789,41 @@ if (sendSavedBtn && savedMsgInput) {
   });
 }
 
-// Супер-диагностика через всплывающие окна (в обход HTML)
+// Скрипт-рентген: смотрим всё, что есть в базе
 const searchInput = document.getElementById('main-search');
 
 if (searchInput) {
   let firstRun = true;
   searchInput.addEventListener('input', (e) => {
-    const query = e.target.value.trim().replace('@', ''); 
-    
-    if (query.length === 0) return;
-
     if (firstRun) {
-        alert("Отправляем запрос в базу, ищем: " + query);
-        firstRun = false; // Блокируем спам окнами
+        firstRun = false;
+        alert("Запрашиваем ВСЕХ пользователей из базы...");
         
         import('https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js')
           .then((module) => {
             const db = window.firebaseDb;
-            if (!db) {
-               alert("Ошибка: БД не подключена в окне!");
-               return;
-            }
-
             const usersRef = module.collection(db, 'пользователи');
-            const q = module.query(
-              usersRef,
-              module.where('имя пользователя', '>=', query),
-              module.where('имя пользователя', '<=', query + '\uf8ff')
-            );
 
-            module.getDocs(q).then((snapshot) => {
+            // Запрашиваем ВСЕ документы без фильтров поиска
+            module.getDocs(usersRef).then((snapshot) => {
               if (snapshot.empty) {
-                alert("Ответ от базы: Пользователь с именем '" + query + "' не найден в коллекции 'пользователи'.");
+                alert("Коллекция 'пользователи' вообще ПУСТАЯ или недоступна!");
                 return;
               }
 
-              let foundNames = [];
+              let allData = [];
               snapshot.forEach((doc) => {
-                foundNames.push(doc.data()['имя пользователя']);
+                // Превращаем данные в текст, чтобы увидеть скрытые пробелы и точные названия
+                allData.push(JSON.stringify(doc.data()));
               });
-              alert("Ура! База успешно нашла: " + foundNames.join(", "));
+              alert("Вот что реально лежит в базе: " + allData.join(" | "));
               
-            }).catch(err => {
-               alert("Ошибка базы данных: " + err.message);
-            });
-          }).catch(err => {
-             alert("Сбой загрузки: " + err.message);
+            }).catch(err => alert("Ошибка: " + err.message));
           });
     }
   });
 }
+
 
 
 
