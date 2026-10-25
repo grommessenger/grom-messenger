@@ -802,7 +802,7 @@ if (searchInput) {
         import('https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js')
           .then((module) => {
             const db = window.firebaseDb;
-            const usersRef = module.collection(db, 'пользователи');
+            const usersRef = module.collection(db, 'users');
 
             // Запрашиваем ВСЕ документы без фильтров поиска
             module.getDocs(usersRef).then((snapshot) => {
