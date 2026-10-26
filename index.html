@@ -876,14 +876,18 @@ if (searchInput) {
   // Подставляем имя и фото в шапку чата
   document.getElementById('chat-header-name').textContent = username;
   document.getElementById('chat-header-avatar').src = avatar;
-  
+
   // Открываем окно переписки
   openScreen('screen-chat');
   
+  // Запускаем подгрузку истории переписки
+  if (window.loadChat) window.loadChat(username);
+
   // Закрываем поиск
   searchResults.style.display = 'none';
   searchInput.value = '';
 };
+
 
 
             searchResults.appendChild(userDiv);
@@ -905,6 +909,75 @@ if (searchInput) {
 
 
 
+// --- ЛОГИКА ПРИВАТНЫХ ЧАТОВ ---
+let currentChatRecipient = '';
+let chatUnsubscribe = null;
+
+// Функция загрузки сообщений
+window.loadChat = function(recipientName) {
+  currentChatRecipient = recipientName;
+  const messagesList = document.getElementById('chat-messages-list');
+  messagesList.innerHTML = '<div style="text-align: center; color: gray; margin-top: 20px;">Загрузка чата...</div>';
+  
+  // Берем имя вашего аккаунта со страницы профиля
+  const myUsername = document.getElementById('profileUsername').textContent.replace('@', '').trim();
+  // Создаем уникальный ID комнаты (сортируем имена по алфавиту)
+  const chatId = [myUsername, recipientName].sort().join('_');
+
+  import('https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js').then((module) => {
+    const db = window.firebaseDb;
+    const q = module.query(
+      module.collection(db, 'chats', chatId, 'messages'),
+      module.orderBy('timestamp', 'asc')
+    );
+
+    if (chatUnsubscribe) chatUnsubscribe(); // Отключаем старый чат
+
+    chatUnsubscribe = module.onSnapshot(q, (snapshot) => {
+      messagesList.innerHTML = ''; 
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        const isMe = data.sender === myUsername;
+        
+        const msgDiv = document.createElement('div');
+        msgDiv.style.cssText = isMe 
+          ? 'align-self: flex-end; background: #e3f2fd; padding: 10px 15px; border-radius: 16px 16px 0 16px; max-width: 75%;'
+          : 'align-self: flex-start; background: #ffffff; border: 1px solid #eee; padding: 10px 15px; border-radius: 16px 16px 16px 0; max-width: 75%; box-shadow: 0 1px 2px rgba(0,0,0,0.05);';
+        
+        msgDiv.innerHTML = `<div style="color: black; font-size: 15px;">${data.text}</div>`;
+        messagesList.appendChild(msgDiv);
+      });
+      messagesList.scrollTop = messagesList.scrollHeight; // Автопрокрутка вниз
+    });
+  });
+};
+
+// Функция отправки нового сообщения
+const chatInput = document.getElementById('chat-message-input');
+const sendChatBtn = document.getElementById('send-chat-message');
+
+function sendMessage() {
+  const text = chatInput.value.trim();
+  if (!text || !currentChatRecipient) return;
+
+  const myUsername = document.getElementById('profileUsername').textContent.replace('@', '').trim();
+  const chatId = [myUsername, currentChatRecipient].sort().join('_');
+
+  import('https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js').then((module) => {
+    const db = window.firebaseDb;
+    module.addDoc(module.collection(db, 'chats', chatId, 'messages'), {
+      text: text,
+      sender: myUsername,
+      timestamp: module.serverTimestamp()
+    });
+    chatInput.value = ''; 
+  });
+}
+
+sendChatBtn.addEventListener('click', sendMessage);
+chatInput.addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') sendMessage();
+});
 
 </script>
 
