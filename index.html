@@ -965,11 +965,21 @@ function sendMessage() {
 
   import('https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js').then((module) => {
     const db = window.firebaseDb;
+    
+    // 1. Сохраняем само сообщение внутри чата
     module.addDoc(module.collection(db, 'chats', chatId, 'messages'), {
       text: text,
       sender: myUsername,
       timestamp: module.serverTimestamp()
     });
+    
+    // 2. Создаем или обновляем "визитную карточку" чата для главного экрана
+    module.setDoc(module.doc(db, 'chats', chatId), {
+      users: [myUsername, currentChatRecipient],
+      lastText: text,
+      time: module.serverTimestamp()
+    }, { merge: true });
+    
     chatInput.value = ''; 
   });
 }
@@ -978,6 +988,75 @@ sendChatBtn.addEventListener('click', sendMessage);
 chatInput.addEventListener('keypress', (e) => {
   if (e.key === 'Enter') sendMessage();
 });
+
+// --- ПОДГРУЗКА АКТИВНЫХ ЧАТОВ НА ГЛАВНЫЙ ЭКРАН ---
+function initMainScreenChats() {
+  const usernameEl = document.getElementById('profileUsername');
+  
+  // Ждем пару миллисекунд, пока Firebase загрузит ваш профиль при входе
+  const checkUser = setInterval(() => {
+    const myUsername = usernameEl.textContent.replace('@', '').trim();
+    if (myUsername && myUsername !== 'user' && myUsername !== 'Без имени') {
+      clearInterval(checkUser);
+      
+      import('https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js').then((module) => {
+        const db = window.firebaseDb;
+        // Ищем все чаты, где вы являетесь участником
+        const q = module.query(
+          module.collection(db, 'chats'),
+          module.where('users', 'array-contains', myUsername)
+        );
+
+        module.onSnapshot(q, (snapshot) => {
+          const mainList = document.getElementById('messages');
+          if (!mainList) return;
+          mainList.innerHTML = ''; 
+          
+          let chatsArray = [];
+          snapshot.forEach((doc) => chatsArray.push(doc.data()));
+          
+          // Сортируем чаты: новые сообщения будут подниматься наверх
+          chatsArray.sort((a, b) => {
+            const tA = a.time?.toMillis ? a.time.toMillis() : Date.now();
+            const tB = b.time?.toMillis ? b.time.toMillis() : Date.now();
+            return tB - tA;
+          });
+          
+          chatsArray.forEach((data) => {
+            const otherUser = data.users.find(u => u !== myUsername);
+            const div = document.createElement('div');
+            
+            // Дизайн плашки чата на главном экране
+            div.style.cssText = 'display: flex; align-items: center; padding: 15px; border-bottom: 1px solid #f0f0f0; cursor: pointer;';
+            div.innerHTML = `
+              <div style="width: 50px; height: 50px; border-radius: 50%; background: #3390ec; margin-right: 15px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 20px; color: white;">
+                ${otherUser.charAt(0).toUpperCase()}
+              </div>
+              <div style="flex: 1; overflow: hidden;">
+                <div style="font-weight: 500; font-size: 16px; color: black; margin-bottom: 4px;">${otherUser}</div>
+                <div style="color: gray; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                  ${data.lastText}
+                </div>
+              </div>
+            `;
+            
+            // По клику открываем переписку
+            div.onclick = () => {
+              document.getElementById('chat-header-name').textContent = otherUser;
+              document.getElementById('chat-header-avatar').src = 'https://via.placeholder.com/40';
+              openScreen('screen-chat');
+              if (window.loadChat) window.loadChat(otherUser);
+            };
+            
+            mainList.appendChild(div);
+          });
+        });
+      });
+    }
+  }, 500);
+}
+initMainScreenChats();
+
 
 </script>
 
