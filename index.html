@@ -789,40 +789,35 @@ if (sendSavedBtn && savedMsgInput) {
   });
 }
 
-// Автономный поиск с автоматическим созданием контейнера
+// Глобальный поверхностный поиск
 const searchInput = document.getElementById('main-search');
 
 if (searchInput) {
-  // Автоматически создаем контейнер для результатов, если его нет в HTML
-  let searchResults = document.getElementById('search-results');
+  let searchResults = document.getElementById('global-search-results');
   if (!searchResults) {
     searchResults = document.createElement('div');
-    searchResults.id = 'search-results';
-    searchResults.style.cssText = 'position: absolute; top: 100%; left: 0; right: 0; background: white; z-index: 1000; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); max-height: 300px; overflow-y: auto;';
-    
-    if (searchInput.parentElement) {
-      searchInput.parentElement.style.position = 'relative';
-      searchInput.parentElement.appendChild(searchResults);
-    }
+    searchResults.id = 'global-search-results';
+    // Принудительно выводим поверх всего интерфейса, прикрепляя к body
+    searchResults.style.cssText = 'position: fixed; top: 120px; left: 5%; width: 90%; background: #2a3033; color: white; z-index: 999999; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); max-height: 50vh; overflow-y: auto; display: none;';
+    document.body.appendChild(searchResults);
   }
 
   searchInput.addEventListener('input', (e) => {
     const query = e.target.value.trim().replace('@', ''); 
     
     if (query.length === 0) {
+      searchResults.style.display = 'none';
       searchResults.innerHTML = '';
       return;
     }
 
-    searchResults.innerHTML = '<div style="padding: 15px; color: gray; text-align: center;">Поиск...</div>';
+    searchResults.style.display = 'block';
+    searchResults.innerHTML = '<div style="padding: 15px; text-align: center; color: #888;">Загрузка...</div>';
 
     import('https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js')
       .then((module) => {
         const db = window.firebaseDb;
-        if (!db) {
-          searchResults.innerHTML = '<div style="padding: 15px; color: red; text-align: center;">Ошибка: БД не подключена</div>';
-          return;
-        }
+        if (!db) return;
 
         const usersRef = module.collection(db, 'users');
         const q = module.query(
@@ -835,43 +830,36 @@ if (searchInput) {
           searchResults.innerHTML = ''; 
           
           if (snapshot.empty) {
-            searchResults.innerHTML = '<div style="padding: 15px; color: gray; text-align: center;">Пользователь не найден</div>';
+            searchResults.innerHTML = '<div style="padding: 15px; text-align: center; color: #888;">Пользователь не найден</div>';
             return;
           }
 
           snapshot.forEach((doc) => {
             const user = doc.data();
             const userDiv = document.createElement('div');
-            userDiv.style.cssText = 'display: flex; align-items: center; gap: 12px; padding: 12px 15px; border-bottom: 1px solid #f0f0f0; cursor: pointer; background: white;';
+            userDiv.style.cssText = 'display: flex; align-items: center; gap: 12px; padding: 12px 15px; border-bottom: 1px solid #1c2125; cursor: pointer;';
             
             const avatar = user.coverPhoto || 'https://via.placeholder.com/40';
             const username = user.username || 'Без имени';
-            const bio = user.bio || '';
 
             userDiv.innerHTML = `
               <img src="${avatar}" style="width: 45px; height: 45px; border-radius: 50%; object-fit: cover;">
-              <div style="flex: 1; overflow: hidden;">
-                <div style="font-weight: 500; color: black; font-size: 16px;">${username}</div>
-                <div style="color: gray; font-size: 13px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${bio}</div>
-              </div>
+              <div style="font-weight: 500; font-size: 16px;">${username}</div>
             `;
             
             userDiv.onclick = () => {
-              alert('Выбран пользователь: ' + username);
-              searchResults.innerHTML = '';
+              alert('Переход в чат с: ' + username);
+              searchResults.style.display = 'none';
               searchInput.value = '';
             };
 
             searchResults.appendChild(userDiv);
           });
-        }).catch(err => {
-           searchResults.innerHTML = `<div style="padding: 15px; color: red; text-align: center;">Ошибка БД: ${err.message}</div>`;
         });
-      }).catch(err => {
-         searchResults.innerHTML = `<div style="padding: 15px; color: red; text-align: center;">Ошибка загрузки SDK: ${err.message}</div>`;
       });
   });
 }
+
 
 
 
