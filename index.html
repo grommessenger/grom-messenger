@@ -1008,7 +1008,7 @@ function initMainScreenChats() {
         );
 
         module.onSnapshot(q, (snapshot) => {
-          const mainList = document.getElementById('messages');
+          const mainList = document.getElementById('chatList');
           if (!mainList) return;
           mainList.innerHTML = ''; 
           
