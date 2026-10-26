@@ -993,15 +993,15 @@ chatInput.addEventListener('keypress', (e) => {
 function initMainScreenChats() {
   const usernameEl = document.getElementById('profileUsername');
   
-  // Ждем пару миллисекунд, пока Firebase загрузит ваш профиль при входе
   const checkUser = setInterval(() => {
     const myUsername = usernameEl.textContent.replace('@', '').trim();
-    if (myUsername && myUsername !== 'user' && myUsername !== 'Без имени') {
+    
+    // Убрали жесткую проверку на 'user'. Теперь загружаем чаты для любого имени!
+    if (myUsername && myUsername.length > 0) {
       clearInterval(checkUser);
       
       import('https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js').then((module) => {
         const db = window.firebaseDb;
-        // Ищем все чаты, где вы являетесь участником
         const q = module.query(
           module.collection(db, 'chats'),
           module.where('users', 'array-contains', myUsername)
@@ -1015,7 +1015,12 @@ function initMainScreenChats() {
           let chatsArray = [];
           snapshot.forEach((doc) => chatsArray.push(doc.data()));
           
-          // Сортируем чаты: новые сообщения будут подниматься наверх
+          // Если чатов пока нет, выведем текст, чтобы экран не был пустым
+          if (chatsArray.length === 0) {
+             mainList.innerHTML = '<div style="text-align:center; color:gray; padding: 20px; font-size: 15px;">Нет активных диалогов</div>';
+             return;
+          }
+          
           chatsArray.sort((a, b) => {
             const tA = a.time?.toMillis ? a.time.toMillis() : Date.now();
             const tB = b.time?.toMillis ? b.time.toMillis() : Date.now();
@@ -1023,11 +1028,10 @@ function initMainScreenChats() {
           });
           
           chatsArray.forEach((data) => {
-            const otherUser = data.users.find(u => u !== myUsername);
+            const otherUser = data.users.find(u => u !== myUsername) || 'Неизвестный';
             const div = document.createElement('div');
             
-            // Дизайн плашки чата на главном экране
-            div.style.cssText = 'display: flex; align-items: center; padding: 15px; border-bottom: 1px solid #f0f0f0; cursor: pointer;';
+            div.style.cssText = 'display: flex; align-items: center; padding: 15px; border-bottom: 1px solid #f0f0f0; cursor: pointer; background: #ffffff;';
             div.innerHTML = `
               <div style="width: 50px; height: 50px; border-radius: 50%; background: #3390ec; margin-right: 15px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 20px; color: white;">
                 ${otherUser.charAt(0).toUpperCase()}
@@ -1040,7 +1044,6 @@ function initMainScreenChats() {
               </div>
             `;
             
-            // По клику открываем переписку
             div.onclick = () => {
               document.getElementById('chat-header-name').textContent = otherUser;
               document.getElementById('chat-header-avatar').src = 'https://via.placeholder.com/40';
@@ -1056,6 +1059,7 @@ function initMainScreenChats() {
   }, 500);
 }
 initMainScreenChats();
+
 
 
 </script>
