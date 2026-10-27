@@ -954,11 +954,17 @@ window.loadChat = function(recipientName) {
   });
 };
 
-// Функция отправки нового сообщения
-const chatInput = document.getElementById('chat-message-input');
-const sendChatBtn = document.getElementById('send-chat-message');
+// --- ФУНКЦИЯ ОТПРАВКИ НОВОГО СООБЩЕНИЯ ---
+const originalInput = document.getElementById('chat-message-input');
+const originalBtn = document.getElementById('send-chat-message');
 
-function sendMessage() {
+// Клонируем элементы, чтобы гарантированно удалить старые конфликтующие команды
+const chatInput = originalInput.cloneNode(true);
+const sendChatBtn = originalBtn.cloneNode(true);
+originalInput.parentNode.replaceChild(chatInput, originalInput);
+originalBtn.parentNode.replaceChild(sendChatBtn, originalBtn);
+
+function sendPrivateMessage() {
   const text = chatInput.value.trim();
   if (!text || !currentChatRecipient) return;
 
@@ -975,7 +981,7 @@ function sendMessage() {
       timestamp: module.serverTimestamp()
     });
     
-    // 2. Создаем или обновляем "визитную карточку" чата для главного экрана
+    // 2. Создаем визитку чата для главного экрана
     module.setDoc(module.doc(db, 'chats', chatId), {
       users: [myUsername, currentChatRecipient],
       lastText: text,
@@ -986,10 +992,11 @@ function sendMessage() {
   });
 }
 
-sendChatBtn.addEventListener('click', sendMessage);
+sendChatBtn.addEventListener('click', sendPrivateMessage);
 chatInput.addEventListener('keypress', (e) => {
-  if (e.key === 'Enter') sendMessage();
+  if (e.key === 'Enter') sendPrivateMessage();
 });
+
 
 // --- ПОДГРУЗКА АКТИВНЫХ ЧАТОВ НА ГЛАВНЫЙ ЭКРАН ---
 function initMainScreenChats() {
