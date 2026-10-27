@@ -110,7 +110,8 @@
   <div style="width: 24px;"></div>
 </div>
 
-      <div class="sidebar-tools"><label class="search-wrap"><svg><use href="#i-search"/></svg><input class="search" id="main-search" type="search" placeholder="Поиск" aria-label="Поиск по чатам"></label><div class="filter-row" role="group" aria-label="Фильтр чатов"><button class="filter-btn active" type="button">Все чаты</button><button class="filter-btn" type="button">Личные</button></div></div>
+      <div class="sidebar-tools"><label class="search-wrap"><svg><use href="#i-search"></svg><input class="search" id="main-search" type="search" placeholder="Поиск" aria-label="Поиск по чатам"></label><div class="filter-row" role="group" aria-label="Фильтр чатов"><button class="filter-btn active" id="tab-all" type="button">Все чаты</button><button class="filter-btn" id="tab-private" type="button">Личные</button></div></div>
+
       <div id="chatList" style="flex: 1; overflow-y: auto; width: 100%;"></div>
 
       <div id="search-results" style="background: white; max-height: 300px; overflow-y: auto; position: absolute; top: 100%; left: 0; width: 100%; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.1);"></div>
@@ -1082,6 +1083,20 @@ function initMainScreenChats() {
 }
 initMainScreenChats();
 
+const tabAll = document.getElementById('tab-all');
+const tabPrivate = document.getElementById('tab-private');
+
+if (tabAll && tabPrivate) {
+  tabAll.addEventListener('click', () => {
+    tabAll.classList.add('active');
+    tabPrivate.classList.remove('active');
+  });
+
+  tabPrivate.addEventListener('click', () => {
+    tabPrivate.classList.add('active');
+    tabAll.classList.remove('active');
+  });
+}
 
 
 
