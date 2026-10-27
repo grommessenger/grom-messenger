@@ -1001,14 +1001,13 @@ chatInput.addEventListener('keypress', (e) => {
 // --- ПОДГРУЗКА АКТИВНЫХ ЧАТОВ НА ГЛАВНЫЙ ЭКРАН ---
 function initMainScreenChats() {
   const usernameEl = document.getElementById('profileUsername');
-  
+
   const checkUser = setInterval(() => {
     const myUsername = usernameEl.textContent.replace('@', '').trim();
-    
-    // Убрали жесткую проверку на 'user'. Теперь загружаем чаты для любого имени!
+
     if (myUsername && myUsername.length > 0) {
       clearInterval(checkUser);
-      
+
       import('https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js').then((module) => {
         const db = window.firebaseDb;
         const q = module.query(
@@ -1019,55 +1018,67 @@ function initMainScreenChats() {
         module.onSnapshot(q, (snapshot) => {
           const mainList = document.getElementById('chatList');
           if (!mainList) return;
-          mainList.innerHTML = ''; 
-          
+
+          mainList.innerHTML = '';
           let chatsArray = [];
+
           snapshot.forEach((doc) => chatsArray.push(doc.data()));
-          
-          // Если чатов пока нет, выведем текст, чтобы экран не был пустым
+
           if (chatsArray.length === 0) {
              mainList.innerHTML = '<div style="text-align:center; color:gray; padding: 20px; font-size: 15px;">Нет активных диалогов</div>';
              return;
           }
-          
-          chatsArray.sort((a, b) => {
-            const tA = a.time?.toMillis ? a.time.toMillis() : Date.now();
-            const tB = b.time?.toMillis ? b.time.toMillis() : Date.now();
-            return tB - tA;
-          });
-          
-          chatsArray.forEach((data) => {
-            const otherUser = data.users.find(u => u !== myUsername) || 'Неизвестный';
-            const div = document.createElement('div');
-            
-            div.style.cssText = 'display: flex; align-items: center; padding: 15px; border-bottom: 1px solid #f0f0f0; cursor: pointer; background: #ffffff;';
-            div.innerHTML = `
-              <div style="width: 50px; height: 50px; border-radius: 50%; background: #3390ec; margin-right: 15px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 20px; color: white;">
-                ${otherUser.charAt(0).toUpperCase()}
-              </div>
-              <div style="flex: 1; overflow: hidden;">
-                <div style="font-weight: 500; font-size: 16px; color: black; margin-bottom: 4px;">${otherUser}</div>
-                <div style="color: gray; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                  ${data.lastText}
+
+          try {
+            // Максимально безопасная сортировка времени
+            chatsArray.sort((a, b) => {
+              let tA = Date.now();
+              let tB = Date.now();
+              if (a.time && typeof a.time.toMillis === 'function') tA = a.time.toMillis();
+              if (b.time && typeof b.time.toMillis === 'function') tB = b.time.toMillis();
+              return tB - tA;
+            });
+
+            chatsArray.forEach((data) => {
+              const usersArr = Array.isArray(data.users) ? data.users : [];
+              const otherUser = usersArr.find(u => u !== myUsername) || 'Неизвестный';
+              const firstLetter = otherUser.charAt(0).toUpperCase();
+              const lastMsg = data.lastText || 'Нет сообщений';
+
+              const div = document.createElement('div');
+              div.style.cssText = 'display: flex; align-items: center; padding: 15px; border-bottom: 1px solid #f0f0f0; cursor: pointer; background: #ffffff;';
+              div.innerHTML = `
+                <div style="min-width: 50px; height: 50px; border-radius: 50%; background: #3390ec; margin-right: 15px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 20px; color: white;">
+                  ${firstLetter}
                 </div>
-              </div>
-            `;
-            
-            div.onclick = () => {
-              document.getElementById('chat-header-name').textContent = otherUser;
-              document.getElementById('chat-header-avatar').src = 'https://via.placeholder.com/40';
-              openScreen('screen-chat');
-              if (window.loadChat) window.loadChat(otherUser);
-            };
-            
-            mainList.appendChild(div);
-          });
+                <div style="flex: 1; overflow: hidden;">
+                  <div style="font-weight: 500; font-size: 16px; color: black; margin-bottom: 4px;">${otherUser}</div>
+                  <div style="color: gray; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                    ${lastMsg}
+                  </div>
+                </div>
+              `;
+
+              div.onclick = () => {
+                document.getElementById('chat-header-name').textContent = otherUser;
+                document.getElementById('chat-header-avatar').src = 'https://via.placeholder.com/40';
+                openScreen('screen-chat');
+                if (window.loadChat) window.loadChat(otherUser);
+              };
+
+              mainList.appendChild(div);
+            });
+          } catch (err) {
+             // Если произойдет внутренний сбой, выводим причину прямо на экран
+             mainList.innerHTML = `<div style="color:red; padding: 20px; text-align:center;">Ошибка отрисовки: ${err.message}</div>`;
+          }
         });
       });
     }
   }, 500);
 }
 initMainScreenChats();
+
 
 
 
