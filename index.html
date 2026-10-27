@@ -1004,9 +1004,9 @@ chatInput.addEventListener('keypress', (e) => {
 function initMainScreenChats() {
   const usernameEl = document.getElementById('profileUsername');
 
-  const checkUser = setInterval(() => {
-        const checkUser = setInterval(() => {
+      const checkUser = setInterval(() => {
       const myUsername = usernameEl.textContent.replace('@', '').trim();
+
 
       if (myUsername && myUsername.length > 0 && myUsername.toLowerCase() !== 'user') {
         clearInterval(checkUser);
