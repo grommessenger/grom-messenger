@@ -1007,6 +1007,8 @@ function initMainScreenChats() {
 
   const checkUser = setInterval(() => {
     const myUsername = usernameEl.textContent.replace('@', '').trim();
+          alert("Главный экран пытается найти чаты для имени: '" + myUsername + "'");
+
 
     if (myUsername && myUsername.length > 0) {
       clearInterval(checkUser);
