@@ -981,14 +981,13 @@ function sendPrivateMessage() {
       timestamp: module.serverTimestamp()
     });
     
-        // 2. Создаем визитку чата для главного экрана
+            // 2. Создаем визитку чата для главного экрана
     module.setDoc(module.doc(db, 'chats', chatId), {
       users: [myUsername, currentChatRecipient],
       lastText: text,
       time: module.serverTimestamp()
-    }, { merge: true })
-    .then(() => alert("Визитка успешно сохранена!"))
-    .catch(err => alert("Ошибка Firestore: " + err.message));
+    }, { merge: true });
+
 
     
     chatInput.value = ''; 
@@ -1006,12 +1005,11 @@ function initMainScreenChats() {
   const usernameEl = document.getElementById('profileUsername');
 
   const checkUser = setInterval(() => {
-    const myUsername = usernameEl.textContent.replace('@', '').trim();
-          alert("Главный экран пытается найти чаты для имени: '" + myUsername + "'");
+        const checkUser = setInterval(() => {
+      const myUsername = usernameEl.textContent.replace('@', '').trim();
 
-
-    if (myUsername && myUsername.length > 0) {
-      clearInterval(checkUser);
+      if (myUsername && myUsername.length > 0 && myUsername.toLowerCase() !== 'user') {
+        clearInterval(checkUser);
 
       import('https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js').then((module) => {
         const db = window.firebaseDb;
