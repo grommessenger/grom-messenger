@@ -568,52 +568,56 @@ privacyItems.forEach(item => {
   }
   window.changeDisplayName = function() {
   const currentName = document.getElementById('profileDisplayName').textContent;
-  const newName = prompt("Введите ваше имя и фамилию:", currentName !== 'Без имени' ? currentName : '');
+  const defaultName = currentName !== 'Без имени' ? currentName : '';
   
-  if (newName !== null && newName.trim() !== '') {
-    if (confirm('Сохранить имя "' + newName + '"?')) {
-      document.getElementById('profileDisplayName').textContent = newName;
-      document.getElementById('topUserName').textContent = newName;
-      
-      const user = window.firebaseAuth.currentUser;
-      if (user) {
-        import('https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js')
-          .then((module) => {
-            module.updateProfile(user, { displayName: newName })
-              .then(() => alert('Имя успешно сохранено!'))
-              .catch((err) => alert('Ошибка сохранения: ' + err.message));
-          });
+  showCustomPrompt("Введите ваше имя и фамилию:", defaultName, (newName) => {
+    if (newName !== '') {
+      if (confirm('Сохранить имя "' + newName + '"?')) {
+        document.getElementById('profileDisplayName').textContent = newName;
+        document.getElementById('topUserName').textContent = newName;
+        
+        const user = window.firebaseAuth.currentUser;
+        if (user) {
+          import('https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js')
+            .then((module) => {
+              module.updateProfile(user, { displayName: newName })
+                .then(() => alert('Имя успешно сохранено!'))
+                .catch((err) => alert('Ошибка сохранения: ' + err.message));
+            });
+        }
       }
     }
-  }
+  });
 };
+
 window.changeUsername = function() {
   const currentUsername = document.getElementById('profileUsername').textContent.replace('@', '');
-  let newUsername = prompt("Введите новый юзернейм (без @):", currentUsername);
   
-  if (newUsername !== null && newUsername.trim() !== '') {
-    newUsername = newUsername.trim();
-    if (newUsername.startsWith('@')) newUsername = newUsername.substring(1);
-    
-    const user = window.firebaseAuth ? window.firebaseAuth.currentUser : null;
-    if (!user) return;
-
-    document.getElementById('profileUsername').textContent = "Сохранение...";
-
-    import('https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js')
-      .then((module) => {
-        const userDoc = module.doc(window.firebaseDb, 'users', user.uid);
-        module.setDoc(userDoc, { username: newUsername }, { merge: true })
-          .then(() => {
-            document.getElementById('profileUsername').textContent = '@' + newUsername;
-          })
-          .catch((err) => {
-            document.getElementById('profileUsername').textContent = '@' + currentUsername;
-            console.error('Ошибка сохранения:', err);
-          });
-      });
-  }
+  showCustomPrompt("Введите новый юзернейм (без @):", currentUsername, (newUsername) => {
+    if (newUsername !== '') {
+      if (newUsername.startsWith('@')) newUsername = newUsername.substring(1);
+      
+      const user = window.firebaseAuth ? window.firebaseAuth.currentUser : null;
+      if (!user) return;
+      
+      document.getElementById('profileUsername').textContent = "Сохранение...";
+      
+      import('https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js')
+        .then((module) => {
+          const userDoc = module.doc(window.firebaseDb, 'users', user.uid);
+          module.setDoc(userDoc, { username: newUsername }, { merge: true })
+            .then(() => {
+              document.getElementById('profileUsername').textContent = '@' + newUsername;
+            })
+            .catch((err) => {
+              document.getElementById('profileUsername').textContent = '@' + currentUsername;
+              console.error('Ошибка сохранения:', err);
+            });
+        });
+    }
+  });
 };
+
 // Обработка загрузки нового фото через ImgBB и сохранение ссылки в Firebase
 document.getElementById('profile-upload').addEventListener('change', function(event) {
   const file = event.target.files[0];
@@ -1097,10 +1101,47 @@ if (tabAll && tabPrivate) {
     tabAll.classList.remove('active');
   });
 }
+function showCustomPrompt(title, defaultValue, callback) {
+  const modal = document.getElementById('custom-prompt');
+  const titleEl = document.getElementById('prompt-title');
+  const inputEl = document.getElementById('prompt-input');
+  const btnOk = document.getElementById('prompt-ok');
+  const btnCancel = document.getElementById('prompt-cancel');
+
+  titleEl.textContent = title;
+  inputEl.value = defaultValue;
+  modal.style.display = 'flex';
+  inputEl.focus();
+
+  const closeAndClean = () => {
+    modal.style.display = 'none';
+    btnOk.onclick = null;
+    btnCancel.onclick = null;
+  };
+
+  btnOk.onclick = () => {
+    callback(inputEl.value.trim());
+    closeAndClean();
+  };
+
+  btnCancel.onclick = () => {
+    closeAndClean();
+  };
+}
 
 
 
 </script>
+<div id="custom-prompt" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.8); z-index: 9999; justify-content: center; align-items: center;">
+  <div style="background: #222; padding: 20px; border-radius: 12px; width: 85%; max-width: 320px; box-shadow: 0 4px 15px rgba(0,0,0,0.5);">
+    <h3 id="prompt-title" style="margin: 0 0 15px 0; color: #fff; font-size: 18px; text-align: center;">Введите значение</h3>
+    <input type="text" id="prompt-input" style="width: 100%; box-sizing: border-box; padding: 12px; margin-bottom: 20px; border-radius: 8px; border: 1px solid #444; background: #111; color: #fff; font-size: 16px; outline: none;">
+    <div style="display: flex; justify-content: space-between;">
+      <button id="prompt-cancel" style="padding: 10px 15px; background: transparent; color: #aaa; border: none; font-size: 16px; cursor: pointer;">Отмена</button>
+      <button id="prompt-ok" style="padding: 10px 25px; background: #007bff; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer;">ОК</button>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>
