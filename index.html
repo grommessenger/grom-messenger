@@ -386,14 +386,10 @@ document.getElementById('btnReset').addEventListener('click', () => {
 
 <script>
     const seedChats=[
-      {id:'masha',name:'Маша Крылова',kind:'person',avatar:'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&h=120&q=80',initials:'МК',online:true,unread:2,pinned:'В субботу в 12:00 у фонтана, не опаздывай ☀',messages:[{text:'Ты видела новый маршрут? Там теперь открыли классную кофейню.',time:'10:42',mine:false},{text:'Да! Давай зайдём после прогулки?',time:'10:44',mine:true},{text:'Супер, уже добавила в планы 🙌',time:'10:45',mine:false}]},
-      {id:'team',name:'Команда ГРОМ',kind:'group',avatar:'',initials:'КГ',online:false,unread:0,messages:[{text:'Дизайн главного экрана уже в фигме',time:'10:31',mine:false},{text:'Посмотрю после созвона, спасибо!',time:'10:36',mine:true}]},
-      {id:'artem',name:'Артём Лебедев',kind:'person',avatar:'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=120&h=120&q=80',initials:'АЛ',online:true,unread:0,messages:[{text:'Закинул тебе ссылку на плейлист',time:'09:58',mine:false}]},
-      {id:'weekend',name:'Выходные в горах',kind:'group',avatar:'',initials:'ВГ',online:false,unread:4,messages:[{text:'По прогнозу будет солнце весь день!',time:'09:24',mine:false}]},
-      {id:'lena',name:'Лена Соколова',kind:'person',avatar:'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=120&h=120&q=80',initials:'ЛС',online:false,unread:0,messages:[{text:'Спасибо за фотографии, очень красивые',time:'Вчера',mine:false}]},
-      {id:'max',name:'Максим Орлов',kind:'person',avatar:'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=120&h=120&q=80',initials:'МО',online:false,unread:0,messages:[{text:'Договорились, буду к семи',time:'Вчера',mine:true}]}
-    ];
-    const storageKey='grom-messenger-v1';let chats;try{const saved=JSON.parse(localStorage.getItem(storageKey));chats=Array.isArray(saved)&&saved.length?saved:seedChats}catch{chats=seedChats}
+  {id:'buyer',name:'Покупатель',kind:'person',avatar:'',initials:'П',online:true,unread:1,messages:[{text:'Привет! Снасти для рыбалки в наличии?',time:'12:00',mine:false}]}
+];
+
+    const storageKey='grom-messenger-v2';let chats;try{const saved=JSON.parse(localStorage.getItem(storageKey));chats=Array.isArray(saved)&&saved.length?saved:seedChats}catch{chats=seedChats}
     let activeId=chats[0].id,activeFilter='all',selectedFile=null,callActive=false,muted=false,toastTimer,rtcClient=null,localTracks=[],callAttempt=0;
     const agoraAppId='af719723e7c048c3aabd2ec7760fcf63';const token = "007eJxTYLgz78Z8Fa+8OQprqqSa9q9bfiF9/f0tx6tePHQLklViXPFHgSExzdzQ0tzIONU82cDEItk4MTEpxSg12dzczCAtOc3MWPnfmayGQEYG2wcMrIwMEAjiszCEpBaXMDAAAPRkIYc=";
     
