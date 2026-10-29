@@ -389,8 +389,8 @@ document.getElementById('btnReset').addEventListener('click', () => {
       
 ];
 
-    const storageKey='grom-messenger-v2';let chats;try{const saved=JSON.parse(localStorage.getItem(storageKey));chats=Array.isArray(saved)&&saved.length?saved:seedChats}catch{chats=seedChats}
-    let activeId=chats[0].id,activeFilter='all',selectedFile=null,callActive=false,muted=false,toastTimer,rtcClient=null,localTracks=[],callAttempt=0;
+    const storageKey='grom-messenger-v1';let chats;try{const saved=JSON.parse(localStorage.getItem(storageKey));chats=Array.isArray(saved)&&saved.length?saved:seedChats}catch{chats=seedChats}
+    let activeId=chats[0]?.id,activeFilter='all',selectedFile=null,callActive=false,muted=false,toastTimer,rtcClient=null,localTracks=[],callAttempt=0;
     const agoraAppId='af719723e7c048c3aabd2ec7760fcf63';const token = "007eJxTYLgz78Z8Fa+8OQprqqSa9q9bfiF9/f0tx6tePHQLklViXPFHgSExzdzQ0tzIONU82cDEItk4MTEpxSg12dzczCAtOc3MWPnfmayGQEYG2wcMrIwMEAjiszCEpBaXMDAAAPRkIYc=";
     
     const app=document.getElementById('app'),chatList=document.getElementById('chatList'),messages=document.getElementById('messages'),messageInput=document.getElementById('messageInput');
