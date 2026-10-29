@@ -417,7 +417,7 @@ document.getElementById('btnReset').addEventListener('click', () => {
     const callPanel=document.getElementById('callPanel'),callState=document.getElementById('callState'),localVideo=document.getElementById('localVideo'),remoteVideo=document.getElementById('remoteVideo');
     function clearVideo(container){container.querySelectorAll('video').forEach(video=>video.remove())}
     async function endCall(){callAttempt++;callActive=false;muted=false;document.getElementById('muteBtn').setAttribute('aria-label','Выключить микрофон');const client=rtcClient,tracks=localTracks;rtcClient=null;localTracks=[];try{if(client?.connectionState==='CONNECTED'&&tracks.length)await client.unpublish(tracks)}finally{try{if(client?.connectionState==='CONNECTED')await client.leave()}finally{tracks.forEach(track=>{track.stop();track.close()});clearVideo(localVideo);clearVideo(remoteVideo);callPanel.hidden=true}}}
-var rtcClient = null;
+
 
 async function startCall() {
   if (callActive) return;
