@@ -386,7 +386,7 @@ document.getElementById('btnReset').addEventListener('click', () => {
 
 <script>
     const seedChats=[
-  {id:'buyer',name:'Покупатель',kind:'person',avatar:'',initials:'П',online:true,unread:1,messages:[{text:'Привет! Снасти для рыбалки в наличии?',time:'12:00',mine:false}]}
+      
 ];
 
     const storageKey='grom-messenger-v2';let chats;try{const saved=JSON.parse(localStorage.getItem(storageKey));chats=Array.isArray(saved)&&saved.length?saved:seedChats}catch{chats=seedChats}
