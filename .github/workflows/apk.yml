@@ -30,12 +30,15 @@ jobs:
           npm init -y
           npm install @capacitor/core @capacitor/android
           npm install @capacitor/cli --save-dev
-          npx cap init "Grom Messenger" "com.grom.messenger" --web-dir "www"
+          
+          npx cap init "Гром" "com.grom.messenger" --web-dir "www"
           npx cap add android
+          
+          npm install @capacitor/assets --save-dev
+          npx capacitor-assets generate --iconPath IMG_20261023_101101_756.jpg --android
           
           cd android
           
-          # Жесткое принуждение единой версии Kotlin для подавления конфликтов
           cat <<EOF >> build.gradle
           allprojects {
               configurations.all {
@@ -55,4 +58,3 @@ jobs:
         with:
           name: Grom-Messenger-Beta
           path: android/app/build/outputs/apk/debug/*.apk
-
