@@ -33,6 +33,10 @@ jobs:
           npx cap init "Grom Messenger" "com.grom.messenger" --web-dir "www"
           npx cap add android
           cd android
+          
+          # Принудительно устанавливаем единую новую версию Kotlin, чтобы избежать дубликатов
+          sed -i -E "s/kotlin_version = '[0-9\.]+'/kotlin_version = '1.9.22'/g" variables.gradle
+          
           ./gradlew assembleDebug
 
       - name: Выгрузка готового APK
@@ -40,4 +44,3 @@ jobs:
         with:
           name: Grom-Messenger-Beta
           path: android/app/build/outputs/apk/debug/*.apk
-
