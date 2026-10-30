@@ -1,0 +1,41 @@
+name: Build Android APK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Получение исходного кода
+        uses: actions/checkout@v4
+
+      - name: Установка Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Установка Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Сборка приложения
+        run: |
+          mkdir www
+          cp -r * www/ 2>/dev/null || true
+          rm -rf www/www
+          npm init -y
+          npm install @capacitor/core @capacitor/android
+          npm install @capacitor/cli --save-dev
+          npx cap init "Grom Messenger" "com.grom.messenger" --web-dir "www"
+          npx cap add android
+          cd android
+          ./gradlew assembleDebug
+
+      - name: Выгрузка готового APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Grom-Messenger-Beta
+          path: android/app/build/outputs/apk/debug/*.apk
