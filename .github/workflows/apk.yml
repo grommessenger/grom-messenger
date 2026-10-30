@@ -4,7 +4,6 @@ on:
   push:
   workflow_dispatch:
 
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -12,11 +11,11 @@ jobs:
       - name: Получение исходного кода
         uses: actions/checkout@v4
 
-      - name: Установка Java 17
+      - name: Установка Java 21
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '17'
+          java-version: '21'
 
       - name: Установка Node.js
         uses: actions/setup-node@v4
@@ -41,3 +40,4 @@ jobs:
         with:
           name: Grom-Messenger-Beta
           path: android/app/build/outputs/apk/debug/*.apk
+
