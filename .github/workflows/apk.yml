@@ -32,10 +32,21 @@ jobs:
           npm install @capacitor/cli --save-dev
           npx cap init "Grom Messenger" "com.grom.messenger" --web-dir "www"
           npx cap add android
+          
           cd android
           
-          # Принудительно устанавливаем единую новую версию Kotlin, чтобы избежать дубликатов
-          sed -i -E "s/kotlin_version = '[0-9\.]+'/kotlin_version = '1.9.22'/g" variables.gradle
+          # Жесткое принуждение единой версии Kotlin для подавления конфликтов
+          cat <<EOF >> build.gradle
+          allprojects {
+              configurations.all {
+                  resolutionStrategy {
+                      force 'org.jetbrains.kotlin:kotlin-stdlib:1.9.22'
+                      force 'org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.9.22'
+                      force 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.22'
+                  }
+              }
+          }
+          EOF
           
           ./gradlew assembleDebug
 
@@ -44,3 +55,4 @@ jobs:
         with:
           name: Grom-Messenger-Beta
           path: android/app/build/outputs/apk/debug/*.apk
+
