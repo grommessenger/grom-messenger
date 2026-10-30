@@ -34,8 +34,10 @@ jobs:
           npx cap init "Гром" "com.grom.messenger" --web-dir "www"
           npx cap add android
           
+          mkdir -p assets
+          cp IMG_20261023_101101_756.jpg assets/icon.jpg
           npm install @capacitor/assets --save-dev
-          npx capacitor-assets generate --iconPath IMG_20261023_101101_756.jpg --android
+          npx capacitor-assets generate --android
           
           cd android
           
@@ -58,3 +60,4 @@ jobs:
         with:
           name: Grom-Messenger-Beta
           path: android/app/build/outputs/apk/debug/*.apk
+
